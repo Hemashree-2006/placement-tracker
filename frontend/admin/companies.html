@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Companies — Placement Tracker</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Admin Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <span class="nav-section-label">Management</span>
+      <a href="students.html" class="nav-link"><span class="nav-icon">👥</span> Students</a>
+      <a href="companies.html" class="nav-link active"><span class="nav-icon">🏢</span> Companies</a>
+      <a href="applications.html" class="nav-link"><span class="nav-icon">📋</span> Applications</a>
+      <a href="sessions.html" class="nav-link"><span class="nav-icon">📚</span> Sessions</a>
+      <span class="nav-section-label">Insights</span>
+      <a href="analytics.html" class="nav-link"><span class="nav-icon">📈</span> Analytics</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">AD</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin</div>
+          <div class="user-role" id="sidebar-user-role">Admin</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>🏢 Manage Companies</h1>
+        <p>Add and update recruiting companies</p>
+      </div>
+      <button class="btn btn-primary" onclick="openCompanyModal()">+ Add Company</button>
+    </header>
+
+    <div class="page-content animate-in">
+      <div class="card">
+        <div class="card-header">
+          <h3>All Companies</h3>
+          <div class="search-box" style="max-width:300px;">
+            <span class="search-icon">🔍</span>
+            <input id="search-input" type="text" placeholder="Search companies..." oninput="filterCompanies()"/>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Job Role</th>
+                <th>Package (LPA)</th>
+                <th>Min CGPA</th>
+                <th>Max Backlogs</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="companies-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:40px;"><div class="loader"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit Company Modal -->
+<div class="modal-overlay" id="company-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Add Company</h3>
+      <button class="modal-close" onclick="closeCompanyModal()">✕</button>
+    </div>
+    <form id="company-form" onsubmit="saveCompany(event)">
+      <input type="hidden" id="company-id"/>
+      <div class="form-group">
+        <label class="form-label">Company Name</label>
+        <input id="comp-name" type="text" class="form-control" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Job Role</label>
+        <input id="comp-role" type="text" class="form-control" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Salary Package (LPA)</label>
+        <input id="comp-salary" type="number" class="form-control" step="0.1" min="0" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Min CGPA</label>
+          <input id="comp-cgpa" type="number" class="form-control" step="0.01" min="0" max="10" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Backlogs</label>
+          <input id="comp-backlogs" type="number" class="form-control" min="0" required/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCompanyModal()">Cancel</button>
+        <button type="submit" id="save-btn" class="btn btn-primary">💾 Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Admin');
+  populateSidebar();
+
+  let allCompanies = [];
+
+  async function loadCompanies() {
+    const res = await Companies.getAll();
+    if (res && res.ok) {
+      allCompanies = res.data.data || [];
+      renderTable(allCompanies);
+    } else {
+      showToast(res?.data?.message || 'Failed to load companies.', 'error');
+    }
+  }
+
+  function filterCompanies() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = allCompanies.filter(c =>
+      c.companyName.toLowerCase().includes(q) ||
+      c.jobRole.toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  function renderTable(companies) {
+    if (!companies.length) {
+      document.getElementById('companies-tbody').innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏢</div><h3>No companies found</h3></div></td></tr>`;
+      return;
+    }
+
+    document.getElementById('companies-tbody').innerHTML = companies.map(c => `
+      <tr>
+        <td><div style="font-weight:600;">${c.companyName}</div></td>
+        <td>${c.jobRole}</td>
+        <td style="color:var(--success);font-weight:600;">${formatCurrency(c.salaryPackage)}</td>
+        <td>${c.minCgpaRequired}</td>
+        <td>${c.maxBacklogsAllowed}</td>
+        <td>
+          <button class="btn btn-sm btn-secondary" onclick='openCompanyModal(${JSON.stringify(c).replace(/'/g, "&apos;")})'>✏️ Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCompany('${c.id}')">🗑️ Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openCompanyModal(c = null) {
+    document.getElementById('modal-title').textContent = c ? 'Edit Company' : 'Add Company';
+    document.getElementById('company-id').value        = c ? c.id : '';
+    document.getElementById('comp-name').value         = c ? c.companyName : '';
+    document.getElementById('comp-role').value         = c ? c.jobRole : '';
+    document.getElementById('comp-salary').value       = c ? c.salaryPackage : '';
+    document.getElementById('comp-cgpa').value         = c ? c.minCgpaRequired : '';
+    document.getElementById('comp-backlogs').value     = c ? c.maxBacklogsAllowed : '';
+    document.getElementById('company-modal').classList.add('open');
+  }
+
+  function closeCompanyModal() {
+    document.getElementById('company-modal').classList.remove('open');
+  }
+
+  async function saveCompany(e) {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    setLoading(btn, true);
+
+    const id = document.getElementById('company-id').value;
+    const body = {
+      companyName:        document.getElementById('comp-name').value.trim(),
+      jobRole:            document.getElementById('comp-role').value.trim(),
+      salaryPackage:      parseFloat(document.getElementById('comp-salary').value),
+      minCgpaRequired:    parseFloat(document.getElementById('comp-cgpa').value),
+      maxBacklogsAllowed: parseInt(document.getElementById('comp-backlogs').value),
+    };
+
+    const res = id ? await Companies.update(id, body) : await Companies.create(body);
+    setLoading(btn, false);
+
+    if (res && res.ok) {
+      showToast(id ? 'Company updated!' : 'Company added!', 'success');
+      closeCompanyModal();
+      loadCompanies();
+    } else {
+      showToast(res?.data?.message || 'Error saving company', 'error');
+    }
+  }
+
+  async function deleteCompany(id) {
+    if (!confirm('Are you sure you want to delete this company?')) return;
+    const res = await Companies.delete(id);
+    if (res && res.ok) {
+      showToast('Company deleted successfully', 'success');
+      loadCompanies();
+    } else {
+      showToast(res?.data?.message || 'Delete failed', 'error');
+    }
+  }
+
+  loadCompanies();
+</script>
+</body>
+</html>

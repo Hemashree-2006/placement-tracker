@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Students — Placement Tracker</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Admin Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <span class="nav-section-label">Management</span>
+      <a href="students.html" class="nav-link active"><span class="nav-icon">👥</span> Students</a>
+      <a href="companies.html" class="nav-link"><span class="nav-icon">🏢</span> Companies</a>
+      <a href="applications.html" class="nav-link"><span class="nav-icon">📋</span> Applications</a>
+      <a href="sessions.html" class="nav-link"><span class="nav-icon">📚</span> Sessions</a>
+      <span class="nav-section-label">Insights</span>
+      <a href="analytics.html" class="nav-link"><span class="nav-icon">📈</span> Analytics</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">AD</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin</div>
+          <div class="user-role" id="sidebar-user-role">Admin</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>👥 Manage Students</h1>
+        <p>View and manage registered students</p>
+      </div>
+    </header>
+
+    <div class="page-content animate-in">
+      <div class="card">
+        <div class="card-header">
+          <h3>All Students</h3>
+          <div class="search-box" style="max-width:300px;">
+            <span class="search-icon">🔍</span>
+            <input id="search-input" type="text" placeholder="Search name, dept..." oninput="filterStudents()"/>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>CGPA</th>
+                <th>Backlogs</th>
+                <th>Skills</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:40px;"><div class="loader"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Admin');
+  populateSidebar();
+
+  let allStudents = [];
+
+  async function loadStudents() {
+    const res = await Students.getAll();
+    if (res && res.ok) {
+      allStudents = res.data.data || [];
+      renderTable(allStudents);
+    } else {
+      showToast(res?.data?.message || 'Failed to load students.', 'error');
+    }
+  }
+
+  function filterStudents() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = allStudents.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.dept.toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  function renderTable(students) {
+    if (!students.length) {
+      document.getElementById('students-tbody').innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><h3>No students found</h3></div></td></tr>`;
+      return;
+    }
+
+    document.getElementById('students-tbody').innerHTML = students.map(s => {
+      const cgpaColor = s.cgpa >= 8 ? 'var(--success)' : s.cgpa >= 6.5 ? 'var(--warning)' : 'var(--danger)';
+      const blColor   = s.backlogs > 0 ? 'var(--danger)' : 'var(--success)';
+      return `
+        <tr>
+          <td><div style="font-weight:600;">${s.name}</div><div style="font-size:0.75rem;color:var(--text-muted);">${s.User?.email || ''}</div></td>
+          <td>${s.dept}</td>
+          <td style="color:${cgpaColor};font-weight:600;">${s.cgpa}</td>
+          <td style="color:${blColor};">${s.backlogs}</td>
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;max-width:200px;">
+              ${(s.skills || []).slice(0,3).map(sk => `<span class="badge badge-applied">${sk}</span>`).join('')}
+              ${(s.skills || []).length > 3 ? `<span class="badge" style="background:var(--bg-secondary);">+${s.skills.length - 3}</span>` : ''}
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">🗑️ Delete</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function deleteStudent(id) {
+    if (!confirm('Are you sure you want to delete this student?')) return;
+    const res = await Students.delete(id);
+    if (res && res.ok) {
+      showToast('Student deleted successfully', 'success');
+      loadStudents();
+    } else {
+      showToast(res?.data?.message || 'Delete failed', 'error');
+    }
+  }
+
+  loadStudents();
+</script>
+</body>
+</html>

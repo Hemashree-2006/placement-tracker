@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Placement Tracker — Login</title>
+  <meta name="description" content="Login to the Placement Training and Interview Tracker System"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    body { display:flex; flex-direction:column; min-height:100vh; overflow-x:hidden; overflow-y:auto; }
+
+    /* animated background */
+    .bg-grid {
+      position:fixed; inset:0; z-index:0;
+      background-image:
+        linear-gradient(rgba(99,120,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,120,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .bg-orb {
+      position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none;
+    }
+    .orb1 { width:500px;height:500px; background:rgba(99,120,255,0.18); top:-150px; left:-150px; animation:orbFloat 8s ease-in-out infinite; }
+    .orb2 { width:400px;height:400px; background:rgba(168,85,247,0.14); bottom:-100px; right:-100px; animation:orbFloat 10s ease-in-out infinite reverse; }
+    @keyframes orbFloat { 0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,-30px);} }
+
+    .login-wrap {
+      position:relative; z-index:1;
+      width:100%; max-width:460px;
+      margin:auto; padding:40px 16px;
+    }
+
+    /* logo */
+    .logo-section { text-align:center; margin-bottom:32px; }
+    .logo-icon {
+      width:64px; height:64px; margin:0 auto 16px;
+      background:linear-gradient(135deg,var(--accent),#a855f7);
+      border-radius:16px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2rem;
+      box-shadow:0 0 40px rgba(99,120,255,0.4);
+      animation:pulse 3s ease-in-out infinite;
+    }
+    .logo-section h1 { font-size:1.6rem; margin-bottom:6px; }
+    .logo-section p  { font-size:0.85rem; }
+
+    /* card */
+    .auth-card {
+      background:var(--glass-bg);
+      border:1px solid var(--glass-border);
+      border-radius:var(--radius-xl);
+      padding:36px;
+      box-shadow:var(--shadow-lg), var(--shadow-glow);
+      backdrop-filter:blur(16px);
+    }
+
+    /* tabs */
+    .auth-tabs {
+      display:flex; gap:0;
+      background:var(--bg-secondary);
+      border-radius:var(--radius-sm);
+      padding:4px;
+      margin-bottom:28px;
+    }
+    .auth-tab {
+      flex:1; padding:9px; text-align:center;
+      border-radius:6px; font-size:0.875rem; font-weight:600;
+      cursor:pointer; border:none; background:none;
+      color:var(--text-muted); transition:var(--transition);
+    }
+    .auth-tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 10px rgba(99,120,255,0.4); }
+
+    /* tab panels */
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; animation:fadeIn 0.3s ease; }
+
+    /* footer link */
+    .auth-footer { text-align:center; margin-top:20px; font-size:0.8rem; color:var(--text-muted); }
+
+    /* demo creds */
+    .demo-box {
+      background:var(--bg-secondary);
+      border:1px dashed var(--border);
+      border-radius:var(--radius-sm);
+      padding:12px 14px;
+      margin-top:16px;
+      font-size:0.75rem;
+    }
+    .demo-box strong { color:var(--accent-light); display:block; margin-bottom:6px; }
+    .demo-cred { display:flex; justify-content:space-between; color:var(--text-secondary); margin:3px 0; }
+    .demo-cred code { color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="login-wrap animate-in">
+    <div class="logo-section">
+      <div class="logo-icon">🎓</div>
+      <h1>Placement Tracker</h1>
+      <p>Training &amp; Interview Management System</p>
+    </div>
+
+    <div class="auth-card">
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login"    onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab"         id="tab-register" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- Login Panel -->
+      <div class="tab-panel active" id="panel-login">
+        <div id="login-alert"></div>
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email Address</label>
+            <input id="login-email" type="email" class="form-control" placeholder="you@example.com" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input id="login-password" type="password" class="form-control" placeholder="••••••••" required/>
+          </div>
+          <button id="login-btn" type="submit" class="btn btn-primary w-full" style="margin-top:8px;">
+            🔐 Sign In
+          </button>
+        </form>
+
+        <div class="demo-box">
+          <strong>🧪 Demo Credentials</strong>
+          <div class="demo-cred"><span>Admin:</span><code>admin@placement.com / Admin@123</code></div>
+          <div class="demo-cred"><span>Student:</span><code>rahul.sharma@student.com / Student@123</code></div>
+        </div>
+      </div>
+
+      <!-- Register Panel -->
+      <div class="tab-panel" id="panel-register">
+        <div id="reg-alert"></div>
+        <form id="reg-form" onsubmit="handleRegister(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Full Name</label>
+              <input id="reg-name" type="text" class="form-control" placeholder="John Doe" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-dept">Department</label>
+              <input id="reg-dept" type="text" class="form-control" placeholder="CSE" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email Address</label>
+            <input id="reg-email" type="email" class="form-control" placeholder="you@student.com" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Password</label>
+            <input id="reg-password" type="password" class="form-control" placeholder="Min 6 characters" required minlength="6"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-cgpa">CGPA</label>
+              <input id="reg-cgpa" type="number" class="form-control" placeholder="8.5" step="0.01" min="0" max="10" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-backlogs">Backlogs</label>
+              <input id="reg-backlogs" type="number" class="form-control" placeholder="0" min="0" value="0"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-skills">Skills <span style="color:var(--text-muted)">(comma-separated)</span></label>
+            <input id="reg-skills" type="text" class="form-control" placeholder="Java, React, Python"/>
+          </div>
+          <button id="reg-btn" type="submit" class="btn btn-primary w-full" style="margin-top:8px;">
+            🚀 Create Account
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      <p>© 2026 Placement Tracker · DBMS Mini Project</p>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Clear any existing session to enforce a fresh login/register page load
+    clearSession();
+
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('panel-' + tab).classList.add('active');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const alert = document.getElementById('login-alert');
+      alert.innerHTML = '';
+      setLoading(btn, true);
+
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const res = await Auth.login({ email, password });
+      setLoading(btn, false);
+
+      if (!res || !res.ok) {
+        alert.innerHTML = `<div class="alert alert-danger">❌ ${res?.data?.message || 'Login failed.'}</div>`;
+        return;
+      }
+
+      saveSession({
+        token:     res.data.token,
+        role:      res.data.role,
+        userId:    res.data.userId,
+        studentId: res.data.studentId,
+      });
+
+      showToast('Welcome back! Redirecting…', 'success');
+      setTimeout(() => {
+        window.location.href = res.data.role === 'Admin'
+          ? 'admin/dashboard.html'
+          : 'student/dashboard.html';
+      }, 600);
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn   = document.getElementById('reg-btn');
+      const alert = document.getElementById('reg-alert');
+      alert.innerHTML = '';
+      setLoading(btn, true);
+
+      const skillsRaw = document.getElementById('reg-skills').value;
+      const skills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+      const body = {
+        email:    document.getElementById('reg-email').value.trim(),
+        password: document.getElementById('reg-password').value,
+        name:     document.getElementById('reg-name').value.trim(),
+        dept:     document.getElementById('reg-dept').value.trim(),
+        cgpa:     parseFloat(document.getElementById('reg-cgpa').value),
+        backlogs: parseInt(document.getElementById('reg-backlogs').value) || 0,
+        skills,
+      };
+
+      const res = await Auth.register(body);
+      setLoading(btn, false);
+
+      if (!res || !res.ok) {
+        alert.innerHTML = `<div class="alert alert-danger">❌ ${res?.data?.message || 'Registration failed.'}</div>`;
+        return;
+      }
+
+      saveSession({
+        token:     res.data.token,
+        role:      res.data.role,
+        userId:    res.data.userId,
+        studentId: res.data.studentId,
+      });
+
+      showToast('Account created! Redirecting…', 'success');
+      setTimeout(() => { window.location.href = 'student/dashboard.html'; }, 600);
+    }
+  </script>
+</body>
+</html>

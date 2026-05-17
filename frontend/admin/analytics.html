@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — Placement Tracker</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <style>
+    .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    .ana-card { padding:30px; text-align:center; }
+    .ana-num { font-size:3rem; font-weight:800; line-height:1; margin-bottom:8px; }
+    .ana-label { font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600; }
+  </style>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Admin Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <span class="nav-section-label">Management</span>
+      <a href="students.html" class="nav-link"><span class="nav-icon">👥</span> Students</a>
+      <a href="companies.html" class="nav-link"><span class="nav-icon">🏢</span> Companies</a>
+      <a href="applications.html" class="nav-link"><span class="nav-icon">📋</span> Applications</a>
+      <a href="sessions.html" class="nav-link"><span class="nav-icon">📚</span> Sessions</a>
+      <span class="nav-section-label">Insights</span>
+      <a href="analytics.html" class="nav-link active"><span class="nav-icon">📈</span> Analytics</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">AD</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin</div>
+          <div class="user-role" id="sidebar-user-role">Admin</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>📈 Placement Analytics</h1>
+        <p>In-depth placement statistics and reports</p>
+      </div>
+    </header>
+
+    <div class="page-content animate-in">
+      <div class="grid-4 mb-24">
+        <div class="card ana-card">
+          <div class="ana-num" id="total-apps" style="color:var(--info);">—</div>
+          <div class="ana-label">Total Applications</div>
+        </div>
+        <div class="card ana-card">
+          <div class="ana-num" id="total-selected" style="color:var(--success);">—</div>
+          <div class="ana-label">Total Selected</div>
+        </div>
+        <div class="card ana-card">
+          <div class="ana-num" id="total-rejected" style="color:var(--danger);">—</div>
+          <div class="ana-label">Total Rejected</div>
+        </div>
+        <div class="card ana-card">
+          <div class="ana-num" id="placement-pct" style="color:var(--accent-light);">—</div>
+          <div class="ana-label">Offer Ratio</div>
+        </div>
+      </div>
+
+      <div class="card mb-24">
+        <div class="card-header">
+          <h3>📊 Company-wise Funnel</h3>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Company Name</th>
+                <th>Job Role</th>
+                <th>Salary (LPA)</th>
+                <th>Total Applicants</th>
+                <th>In Process</th>
+                <th>Selected</th>
+                <th>Rejected</th>
+                <th>Conversion Rate</th>
+              </tr>
+            </thead>
+            <tbody id="company-analytics">
+              <tr><td colspan="8" style="text-align:center;padding:40px;"><div class="loader"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Export button for future -->
+      <div style="text-align:right;">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Admin');
+  populateSidebar();
+
+  async function loadAnalytics() {
+    const res = await Applications.getAnalytics();
+    if (!res || !res.ok) {
+      showToast('Failed to load analytics', 'error');
+      return;
+    }
+
+    const { overall, byCompany } = res.data;
+
+    // Summary
+    const total = overall.total || 0;
+    const selected = overall.selected || 0;
+    const rejected = overall.rejected || 0;
+    const pct = total > 0 ? Math.round((selected / total) * 100) : 0;
+
+    document.getElementById('total-apps').textContent = total;
+    document.getElementById('total-selected').textContent = selected;
+    document.getElementById('total-rejected').textContent = rejected;
+    document.getElementById('placement-pct').textContent = `${pct}%`;
+
+    // Table
+    if (!byCompany || !byCompany.length) {
+      document.getElementById('company-analytics').innerHTML = `<tr><td colspan="8"><div class="empty-state">No data available</div></td></tr>`;
+      return;
+    }
+
+    document.getElementById('company-analytics').innerHTML = byCompany.map(c => {
+      const cRate = c.totalApplicants > 0 ? Math.round((c.selected / c.totalApplicants) * 100) : 0;
+      return `
+        <tr>
+          <td><div style="font-weight:700;">${c.companyName}</div></td>
+          <td style="color:var(--text-secondary);">${c.jobRole}</td>
+          <td><span class="badge badge-applied">${c.salaryPackage}</span></td>
+          <td style="font-weight:700;">${c.totalApplicants}</td>
+          <td style="color:var(--warning);">${c.inProcess}</td>
+          <td style="color:var(--success);font-weight:700;">${c.selected}</td>
+          <td style="color:var(--danger);">${c.rejected}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:35px;text-align:right;font-size:0.8rem;">${cRate}%</span>
+              <div class="progress-bar" style="width:60px;">
+                <div class="progress-fill" style="width:${cRate}%;"></div>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  loadAnalytics();
+</script>
+</body>
+</html>

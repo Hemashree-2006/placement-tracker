@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Companies — Placement Tracker</title>
+  <meta name="description" content="Browse eligible companies and apply for placement"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <style>
+    .company-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+    .company-card {
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:24px;
+      transition:var(--transition);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .company-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--glass-border); }
+    .company-logo {
+      width:48px;height:48px;
+      background:linear-gradient(135deg,var(--accent),#a855f7);
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.3rem;font-weight:800;color:#fff;
+      flex-shrink:0;
+    }
+    .company-meta { display:flex;flex-wrap:wrap;gap:8px;margin-top:4px; }
+    .company-req { font-size:0.75rem;color:var(--text-muted);display:flex;align-items:center;gap:4px; }
+    .eligible-tag { background:var(--success-bg);color:var(--success);font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:100px; }
+    .ineligible-tag { background:var(--danger-bg);color:var(--danger);font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:100px; }
+    .filter-btns { display:flex;gap:8px; }
+    .filter-btn {
+      padding:7px 14px;font-size:0.8rem;font-weight:600;
+      border-radius:100px;border:1px solid var(--border);
+      background:transparent;color:var(--text-secondary);
+      cursor:pointer;transition:var(--transition);
+    }
+    .filter-btn.active { background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 10px rgba(99,120,255,0.3); }
+  </style>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Student Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <span class="nav-section-label">Placement</span>
+      <a href="companies.html" class="nav-link active"><span class="nav-icon">🏢</span> Companies</a>
+      <a href="applications.html" class="nav-link"><span class="nav-icon">📋</span> My Applications</a>
+      <span class="nav-section-label">Training</span>
+      <a href="sessions.html" class="nav-link"><span class="nav-icon">📚</span> Sessions</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">ST</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Student</div>
+          <div class="user-role" id="sidebar-user-role">Student</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>🏢 Companies</h1>
+        <p id="companies-subtitle">Loading companies…</p>
+      </div>
+    </header>
+
+    <div class="page-content animate-in">
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input id="search-input" type="text" placeholder="Search companies, roles…" oninput="filterCompanies()"/>
+        </div>
+        <div class="filter-btns">
+          <button class="filter-btn active" id="filter-all"      onclick="setFilter('all')">All</button>
+          <button class="filter-btn"         id="filter-eligible" onclick="setFilter('eligible')">✅ Eligible Only</button>
+        </div>
+      </div>
+
+      <div class="company-grid" id="companies-grid">
+        <div style="grid-column:1/-1;" class="page-loader"><div class="loader"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Apply Confirm Modal -->
+<div class="modal-overlay" id="apply-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📝 Confirm Application</h3>
+      <button class="modal-close" onclick="closeApplyModal()">✕</button>
+    </div>
+    <div id="apply-modal-body" style="color:var(--text-secondary);line-height:1.8;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeApplyModal()">Cancel</button>
+      <button class="btn btn-primary" id="confirm-apply-btn" onclick="confirmApply()">🚀 Apply Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Student');
+  populateSidebar();
+
+  let allCompanies  = [];
+  let eligibleIds   = new Set();
+  let appliedIds    = new Set();
+  let activeFilter  = 'all';
+  let pendingCompanyId = null;
+
+  async function loadCompanies() {
+    const [allRes, eligRes, appRes] = await Promise.all([
+      Companies.getAll(),
+      Companies.getEligible(),
+      Applications.getAll(),
+    ]);
+
+    if (allRes && allRes.ok)  allCompanies = allRes.data.data || [];
+    if (eligRes && eligRes.ok) eligibleIds  = new Set((eligRes.data.data || []).map(c => c.id));
+    if (appRes && appRes.ok)   appliedIds   = new Set((appRes.data.data || []).map(a => a.CompanyId));
+
+    document.getElementById('companies-subtitle').textContent =
+      `${allCompanies.length} companies · ${eligibleIds.size} eligible for you`;
+    renderGrid();
+  }
+
+  function setFilter(f) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('filter-' + f).classList.add('active');
+    renderGrid();
+  }
+
+  function filterCompanies() { renderGrid(); }
+
+  function renderGrid() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    let list = allCompanies;
+    if (activeFilter === 'eligible') list = list.filter(c => eligibleIds.has(c.id));
+    if (q) list = list.filter(c => c.companyName.toLowerCase().includes(q) || c.jobRole.toLowerCase().includes(q));
+
+    if (!list.length) {
+      document.getElementById('companies-grid').innerHTML = `
+        <div style="grid-column:1/-1;"><div class="empty-state">
+          <div class="empty-icon">🏢</div>
+          <h3>No companies found</h3>
+          <p>Try changing the filter or search.</p>
+        </div></div>`;
+      return;
+    }
+
+    document.getElementById('companies-grid').innerHTML = list.map(c => {
+      const isElig    = eligibleIds.has(c.id);
+      const isApplied = appliedIds.has(c.id);
+      const initial   = c.companyName[0].toUpperCase();
+      return `
+        <div class="company-card">
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div class="company-logo">${initial}</div>
+            <div style="flex:1;">
+              <div style="font-size:1rem;font-weight:700;">${c.companyName}</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">${c.jobRole}</div>
+            </div>
+            ${isElig ? '<span class="eligible-tag">✅ Eligible</span>' : '<span class="ineligible-tag">❌ Ineligible</span>'}
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;text-align:center;">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--success);">${formatCurrency(c.salaryPackage)}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">Salary Package</div>
+          </div>
+          <div class="company-meta">
+            <span class="company-req">📊 Min CGPA: <strong style="color:var(--text-primary)">${c.minCgpaRequired}</strong></span>
+            <span class="company-req">❌ Max Backlogs: <strong style="color:var(--text-primary)">${c.maxBacklogsAllowed}</strong></span>
+          </div>
+          ${isApplied
+            ? `<button class="btn btn-secondary w-full" disabled>✅ Already Applied</button>`
+            : isElig
+              ? `<button class="btn btn-primary w-full" onclick="openApplyModal('${c.id}','${c.companyName}','${c.jobRole}','${c.salaryPackage}')">🚀 Apply</button>`
+              : `<button class="btn btn-secondary w-full" disabled>🔒 Not Eligible</button>`}
+        </div>`;
+    }).join('');
+  }
+
+  function openApplyModal(id, name, role, salary) {
+    pendingCompanyId = id;
+    document.getElementById('apply-modal-body').innerHTML = `
+      <p>You are about to apply to:</p>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:16px;margin:12px 0;">
+        <div style="font-size:1.1rem;font-weight:700;">${name}</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;">${role} · ${formatCurrency(salary)}</div>
+      </div>
+      <p>This cannot be undone. Are you sure?</p>`;
+    document.getElementById('apply-modal').classList.add('open');
+  }
+
+  function closeApplyModal() {
+    document.getElementById('apply-modal').classList.remove('open');
+    pendingCompanyId = null;
+  }
+
+  async function confirmApply() {
+    if (!pendingCompanyId) return;
+    const btn = document.getElementById('confirm-apply-btn');
+    setLoading(btn, true);
+
+    const res = await Applications.apply({ companyId: pendingCompanyId });
+    setLoading(btn, false);
+
+    if (!res || !res.ok) {
+      if (res && res.status === 409) {
+        // It's already applied, update UI gracefully
+        appliedIds.add(Number(pendingCompanyId));
+        showToast('You have already applied to this company.', 'info');
+        closeApplyModal();
+        renderGrid();
+        return;
+      }
+      showToast(res?.data?.message || 'Application failed.', 'error');
+      closeApplyModal();
+      return;
+    }
+
+    appliedIds.add(Number(pendingCompanyId));
+    showToast('Application submitted successfully! 🎉', 'success');
+    closeApplyModal();
+    renderGrid();
+  }
+
+  loadCompanies();
+</script>
+</body>
+</html>

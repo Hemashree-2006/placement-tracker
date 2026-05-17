@@ -1,0 +1,175 @@
+{
+  "users": [
+    {
+      "_comment": "Admin account",
+      "email": "admin@placement.com",
+      "password": "Admin@123",
+      "role": "Admin"
+    },
+    {
+      "_comment": "Student accounts",
+      "email": "rahul.sharma@student.com",
+      "password": "Student@123",
+      "role": "Student"
+    },
+    {
+      "email": "priya.nair@student.com",
+      "password": "Student@123",
+      "role": "Student"
+    },
+    {
+      "email": "arjun.mehta@student.com",
+      "password": "Student@123",
+      "role": "Student"
+    },
+    {
+      "email": "sneha.reddy@student.com",
+      "password": "Student@123",
+      "role": "Student"
+    }
+  ],
+
+  "students": [
+    {
+      "_comment": "Linked to rahul.sharma@student.com",
+      "name": "Rahul Sharma",
+      "dept": "CSE",
+      "cgpa": 8.7,
+      "backlogs": 0,
+      "skills": ["Java", "Spring Boot", "MySQL", "Git"],
+      "resumePath": "/resumes/rahul_sharma.pdf"
+    },
+    {
+      "_comment": "Linked to priya.nair@student.com",
+      "name": "Priya Nair",
+      "dept": "ECE",
+      "cgpa": 7.2,
+      "backlogs": 1,
+      "skills": ["Python", "Machine Learning", "TensorFlow"],
+      "resumePath": "/resumes/priya_nair.pdf"
+    },
+    {
+      "_comment": "Linked to arjun.mehta@student.com",
+      "name": "Arjun Mehta",
+      "dept": "CSE",
+      "cgpa": 9.1,
+      "backlogs": 0,
+      "skills": ["React", "Node.js", "MongoDB", "Docker"],
+      "resumePath": "/resumes/arjun_mehta.pdf"
+    },
+    {
+      "_comment": "Linked to sneha.reddy@student.com",
+      "name": "Sneha Reddy",
+      "dept": "IT",
+      "cgpa": 6.8,
+      "backlogs": 2,
+      "skills": ["C++", "Data Structures", "Algorithms"],
+      "resumePath": "/resumes/sneha_reddy.pdf"
+    }
+  ],
+
+  "companies": [
+    {
+      "companyName": "TCS",
+      "jobRole": "System Engineer",
+      "salaryPackage": 3.5,
+      "minCgpaRequired": 6.0,
+      "maxBacklogsAllowed": 2
+    },
+    {
+      "companyName": "Infosys",
+      "jobRole": "Software Engineer",
+      "salaryPackage": 4.5,
+      "minCgpaRequired": 7.0,
+      "maxBacklogsAllowed": 1
+    },
+    {
+      "companyName": "Amazon",
+      "jobRole": "SDE-1",
+      "salaryPackage": 18.0,
+      "minCgpaRequired": 8.0,
+      "maxBacklogsAllowed": 0
+    },
+    {
+      "companyName": "Wipro",
+      "jobRole": "Project Engineer",
+      "salaryPackage": 3.8,
+      "minCgpaRequired": 6.5,
+      "maxBacklogsAllowed": 2
+    },
+    {
+      "companyName": "Google",
+      "jobRole": "Software Engineer L3",
+      "salaryPackage": 45.0,
+      "minCgpaRequired": 8.5,
+      "maxBacklogsAllowed": 0
+    }
+  ],
+
+  "applications": [
+    {
+      "_comment": "Rahul applied to TCS - status updated to Shortlisted",
+      "studentRef": "Rahul Sharma",
+      "companyRef": "TCS",
+      "status": "Shortlisted"
+    },
+    {
+      "_comment": "Rahul applied to Amazon",
+      "studentRef": "Rahul Sharma",
+      "companyRef": "Amazon",
+      "status": "Applied"
+    },
+    {
+      "_comment": "Arjun applied to Google",
+      "studentRef": "Arjun Mehta",
+      "companyRef": "Google",
+      "status": "Technical"
+    },
+    {
+      "_comment": "Arjun applied to Amazon",
+      "studentRef": "Arjun Mehta",
+      "companyRef": "Amazon",
+      "status": "HR"
+    },
+    {
+      "_comment": "Priya applied to Infosys",
+      "studentRef": "Priya Nair",
+      "companyRef": "Infosys",
+      "status": "Applied"
+    },
+    {
+      "_comment": "Sneha applied to TCS",
+      "studentRef": "Sneha Reddy",
+      "companyRef": "TCS",
+      "status": "Rejected"
+    }
+  ],
+
+  "training_sessions": [
+    {
+      "category": "Aptitude",
+      "sessionDate": "2026-05-20",
+      "trainerName": "Mr. Venkatesh Kumar"
+    },
+    {
+      "category": "Coding",
+      "sessionDate": "2026-05-22",
+      "trainerName": "Ms. Ananya Iyer"
+    },
+    {
+      "category": "HR Interview",
+      "sessionDate": "2026-05-25",
+      "trainerName": "Dr. Rajeev Pillai"
+    },
+    {
+      "category": "Group Discussion",
+      "sessionDate": "2026-05-28",
+      "trainerName": "Ms. Meena Srinivasan"
+    },
+    {
+      "category": "Technical Interview",
+      "sessionDate": "2026-06-01",
+      "trainerName": "Mr. Suresh Babu"
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard — Placement Tracker</title>
+  <meta name="description" content="Student dashboard for placement tracking"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Student Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link active" id="nav-dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <span class="nav-section-label">Placement</span>
+      <a href="companies.html" class="nav-link" id="nav-companies">
+        <span class="nav-icon">🏢</span> Companies
+      </a>
+      <a href="applications.html" class="nav-link" id="nav-applications">
+        <span class="nav-icon">📋</span> My Applications
+      </a>
+      <span class="nav-section-label">Training</span>
+      <a href="sessions.html" class="nav-link" id="nav-sessions">
+        <span class="nav-icon">📚</span> Sessions
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">ST</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Student</div>
+          <div class="user-role" id="sidebar-user-role">Student</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>Dashboard</h1>
+        <p id="welcome-text">Welcome back!</p>
+      </div>
+      <div class="flex gap-12 items-center">
+        <span id="topbar-badge" class="badge badge-student">Student</span>
+      </div>
+    </header>
+
+    <div class="page-content animate-in">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon purple">🎯</div>
+          <div>
+            <div class="stat-value" id="stat-eligible">—</div>
+            <div class="stat-label">Eligible Companies</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div>
+            <div class="stat-value" id="stat-applied">—</div>
+            <div class="stat-label">Applications Sent</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div>
+            <div class="stat-value" id="stat-selected">—</div>
+            <div class="stat-label">Offers Received</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">📚</div>
+          <div>
+            <div class="stat-value" id="stat-sessions">—</div>
+            <div class="stat-label">Upcoming Sessions</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Profile Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3>👤 My Profile</h3>
+            <button class="btn btn-secondary btn-sm" onclick="openEditModal()">✏️ Edit</button>
+          </div>
+          <div id="profile-content">
+            <div class="page-loader"><div class="loader"></div></div>
+          </div>
+        </div>
+
+        <!-- Recent Applications -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Recent Applications</h3>
+            <a href="applications.html" class="btn btn-secondary btn-sm">View All →</a>
+          </div>
+          <div id="recent-apps-content">
+            <div class="page-loader"><div class="loader"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Sessions -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <h3>📅 Upcoming Training Sessions</h3>
+          <a href="sessions.html" class="btn btn-secondary btn-sm">All Sessions →</a>
+        </div>
+        <div id="sessions-content">
+          <div class="page-loader"><div class="loader"></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Edit Profile</h3>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <form id="edit-form" onsubmit="handleUpdateProfile(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input id="edit-name" type="text" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <input id="edit-dept" type="text" class="form-control" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CGPA</label>
+          <input id="edit-cgpa" type="number" class="form-control" step="0.01" min="0" max="10"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Backlogs</label>
+          <input id="edit-backlogs" type="number" class="form-control" min="0"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Skills <span class="text-muted">(comma-separated)</span></label>
+        <input id="edit-skills" type="text" class="form-control" placeholder="Java, React, Python"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resume Path</label>
+        <input id="edit-resume" type="text" class="form-control" placeholder="/resumes/your_resume.pdf"/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" id="save-profile-btn" class="btn btn-primary">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Student');
+  populateSidebar();
+
+  let myProfile = null;
+
+  async function loadDashboard() {
+    const sid = getStudentId();
+
+    // Load profile
+    if (sid) {
+      const res = await Students.getById(sid);
+      if (res && res.ok) {
+        myProfile = res.data.data;
+        renderProfile(myProfile);
+        document.getElementById('welcome-text').textContent = `Welcome back, ${myProfile.name}!`;
+        const avatarEl = document.getElementById('sidebar-avatar');
+        if (avatarEl) avatarEl.textContent = getInitials(myProfile.name);
+        const nameEl = document.getElementById('sidebar-user-name');
+        if (nameEl) nameEl.textContent = myProfile.name;
+      }
+    }
+
+    // Stats: eligible companies
+    const eligRes = await Companies.getEligible();
+    if (eligRes && eligRes.ok) {
+      document.getElementById('stat-eligible').textContent = eligRes.data.count ?? 0;
+    }
+
+    // Stats: applications
+    const appRes = await Applications.getAll();
+    if (appRes && appRes.ok) {
+      const apps = appRes.data.data || [];
+      document.getElementById('stat-applied').textContent = apps.length;
+      document.getElementById('stat-selected').textContent = apps.filter(a => a.status === 'Selected').length;
+      renderRecentApps(apps.slice(0, 4));
+    }
+
+    // Stats: sessions
+    const sesRes = await Sessions.getAll();
+    if (sesRes && sesRes.ok) {
+      const upcoming = (sesRes.data.data || []).filter(s => new Date(s.sessionDate) >= new Date());
+      document.getElementById('stat-sessions').textContent = upcoming.length;
+      renderSessions(sesRes.data.data || []);
+    }
+  }
+
+  function renderProfile(p) {
+    const cgpaColor = p.cgpa >= 8 ? 'var(--success)' : p.cgpa >= 6.5 ? 'var(--warning)' : 'var(--danger)';
+    document.getElementById('profile-content').innerHTML = `
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#a855f7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;color:#fff;">
+          ${getInitials(p.name)}
+        </div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">${p.name}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">📍 ${p.dept}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;">CGPA</div>
+          <div style="font-size:1.4rem;font-weight:800;color:${cgpaColor};">${p.cgpa}</div>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;">Backlogs</div>
+          <div style="font-size:1.4rem;font-weight:800;color:${p.backlogs > 0 ? 'var(--danger)' : 'var(--success)'};">${p.backlogs}</div>
+        </div>
+      </div>
+      ${p.skills && p.skills.length ? `
+        <div style="margin-bottom:12px;">
+          <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Skills</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${p.skills.map(s => `<span class="badge badge-applied">${s}</span>`).join('')}
+          </div>
+        </div>` : ''}
+      ${p.resumePath ? `<div style="font-size:0.8rem;color:var(--text-muted);">📄 Resume: <code>${p.resumePath}</code></div>` : ''}
+    `;
+  }
+
+  function renderRecentApps(apps) {
+    if (!apps.length) {
+      document.getElementById('recent-apps-content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No Applications Yet</h3>
+          <p>Browse companies and start applying!</p>
+          <a href="companies.html" class="btn btn-primary btn-sm" style="margin-top:12px;">Browse Companies</a>
+        </div>`;
+      return;
+    }
+    document.getElementById('recent-apps-content').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${apps.map(a => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);">
+            <div>
+              <div style="font-weight:600;font-size:0.875rem;">${a.Company?.companyName || '—'}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${a.Company?.jobRole || ''}</div>
+            </div>
+            ${statusBadge(a.status)}
+          </div>`).join('')}
+      </div>`;
+  }
+
+  function renderSessions(sessions) {
+    if (!sessions.length) {
+      document.getElementById('sessions-content').innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><h3>No sessions scheduled</h3></div>`;
+      return;
+    }
+    const upcoming = sessions.filter(s => new Date(s.sessionDate) >= new Date()).slice(0, 3);
+    const past     = sessions.filter(s => new Date(s.sessionDate) <  new Date()).slice(0, 2);
+    const render = list => list.map(s => `
+      <div style="display:flex;align-items:center;gap:14px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);">
+        <div style="width:42px;height:42px;background:rgba(99,120,255,0.15);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">📚</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.875rem;">${s.category}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">👨‍🏫 ${s.trainerName} · 📅 ${formatDate(s.sessionDate)}</div>
+        </div>
+        ${new Date(s.sessionDate) >= new Date() ? '<span class="badge badge-applied">Upcoming</span>' : '<span class="badge" style="background:var(--bg-card);color:var(--text-muted);">Past</span>'}
+      </div>`).join('');
+
+    document.getElementById('sessions-content').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${render([...upcoming, ...past])}
+      </div>`;
+  }
+
+  function openEditModal() {
+    if (!myProfile) return;
+    document.getElementById('edit-name').value     = myProfile.name || '';
+    document.getElementById('edit-dept').value     = myProfile.dept || '';
+    document.getElementById('edit-cgpa').value     = myProfile.cgpa || '';
+    document.getElementById('edit-backlogs').value = myProfile.backlogs ?? 0;
+    document.getElementById('edit-skills').value   = (myProfile.skills || []).join(', ');
+    document.getElementById('edit-resume').value   = myProfile.resumePath || '';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  async function handleUpdateProfile(e) {
+    e.preventDefault();
+    const btn = document.getElementById('save-profile-btn');
+    setLoading(btn, true);
+
+    const sid = getStudentId();
+    const skills = document.getElementById('edit-skills').value.split(',').map(s => s.trim()).filter(Boolean);
+    const body = {
+      name:       document.getElementById('edit-name').value.trim(),
+      dept:       document.getElementById('edit-dept').value.trim(),
+      cgpa:       parseFloat(document.getElementById('edit-cgpa').value),
+      backlogs:   parseInt(document.getElementById('edit-backlogs').value) || 0,
+      skills,
+      resumePath: document.getElementById('edit-resume').value.trim(),
+    };
+
+    const res = await Students.update(sid, body);
+    setLoading(btn, false);
+
+    if (!res || !res.ok) {
+      showToast(res?.data?.message || 'Update failed.', 'error');
+      return;
+    }
+
+    myProfile = res.data.data;
+    renderProfile(myProfile);
+    closeEditModal();
+    showToast('Profile updated successfully!', 'success');
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

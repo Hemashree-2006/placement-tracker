@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Applications — Placement Tracker</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🎓</div>
+      <h2>Placement Tracker</h2>
+      <p>Admin Portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Overview</span>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <span class="nav-section-label">Management</span>
+      <a href="students.html" class="nav-link"><span class="nav-icon">👥</span> Students</a>
+      <a href="companies.html" class="nav-link"><span class="nav-icon">🏢</span> Companies</a>
+      <a href="applications.html" class="nav-link active"><span class="nav-icon">📋</span> Applications</a>
+      <a href="sessions.html" class="nav-link"><span class="nav-icon">📚</span> Sessions</a>
+      <span class="nav-section-label">Insights</span>
+      <a href="analytics.html" class="nav-link"><span class="nav-icon">📈</span> Analytics</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">AD</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin</div>
+          <div class="user-role" id="sidebar-user-role">Admin</div>
+        </div>
+        <button class="btn-logout" onclick="Auth.logout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>📋 Manage Applications</h1>
+        <p>Update student application statuses</p>
+      </div>
+    </header>
+
+    <div class="page-content animate-in">
+      <div class="card">
+        <div class="card-header">
+          <h3>All Applications</h3>
+          <div class="toolbar" style="margin-bottom:0;">
+            <div class="search-box" style="width:250px;">
+              <span class="search-icon">🔍</span>
+              <input id="search-input" type="text" placeholder="Search student or company..." oninput="filterApps()"/>
+            </div>
+            <select id="status-filter" class="form-control" style="width:150px;padding:9px 14px;" onchange="filterApps()">
+              <option value="All">All Statuses</option>
+              <option value="Applied">Applied</option>
+              <option value="Shortlisted">Shortlisted</option>
+              <option value="Technical">Technical</option>
+              <option value="HR">HR</option>
+              <option value="Selected">Selected</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Company</th>
+                <th>Job Role</th>
+                <th>Current Status</th>
+                <th>Update Status</th>
+              </tr>
+            </thead>
+            <tbody id="apps-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:40px;"><div class="loader"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  requireRole('Admin');
+  populateSidebar();
+
+  let allApps = [];
+
+  async function loadApplications() {
+    const res = await Applications.getAll();
+    if (res && res.ok) {
+      allApps = res.data.data || [];
+      // sort by date descending
+      allApps.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      renderTable(allApps);
+    } else {
+      showToast(res?.data?.message || 'Failed to load applications.', 'error');
+    }
+  }
+
+  function filterApps() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const sf = document.getElementById('status-filter').value;
+    
+    let filtered = allApps;
+    if (sf !== 'All') {
+      filtered = filtered.filter(a => a.status === sf);
+    }
+    if (q) {
+      filtered = filtered.filter(a =>
+        (a.Student?.name || '').toLowerCase().includes(q) ||
+        (a.Company?.companyName || '').toLowerCase().includes(q)
+      );
+    }
+    renderTable(filtered);
+  }
+
+  function renderTable(apps) {
+    if (!apps.length) {
+      document.getElementById('apps-tbody').innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div><h3>No applications found</h3></div></td></tr>`;
+      return;
+    }
+
+    const statusOptions = ['Applied', 'Shortlisted', 'Technical', 'HR', 'Selected', 'Rejected'];
+
+    document.getElementById('apps-tbody').innerHTML = apps.map(a => `
+      <tr>
+        <td>
+          <div style="font-weight:600;">${a.Student?.name || '—'}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">CGPA: ${a.Student?.cgpa || '—'}</div>
+        </td>
+        <td><div style="font-weight:600;">${a.Company?.companyName || '—'}</div></td>
+        <td><span style="color:var(--text-secondary);">${a.Company?.jobRole || '—'}</span></td>
+        <td id="status-cell-${a.id}">${statusBadge(a.status)}</td>
+        <td>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="form-control" style="width:140px;padding:6px 10px;" id="select-${a.id}">
+              ${statusOptions.map(opt => `<option value="${opt}" ${a.status === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+            </select>
+            <button class="btn btn-sm btn-primary" onclick="updateStatus('${a.id}')">Update</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function updateStatus(id) {
+    const newStatus = document.getElementById(`select-${id}`).value;
+    const res = await Applications.updateStatus(id, { status: newStatus });
+    if (res && res.ok) {
+      showToast('Status updated successfully!', 'success');
+      document.getElementById(`status-cell-${id}`).innerHTML = statusBadge(newStatus);
+      // FIX: use String() coercion — onclick passes id as string, a.id from API is a number
+      const app = allApps.find(a => String(a.id) === String(id));
+      if (app) app.status = newStatus;
+    } else {
+      showToast(res?.data?.message || 'Failed to update status', 'error');
+    }
+  }
+
+  loadApplications();
+</script>
+</body>
+</html>
