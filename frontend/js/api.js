@@ -2,23 +2,23 @@
    api.js — Central API client for Placement Tracker Frontend
    ============================================================= */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://placement-tracker-1-08u6.onrender.com/api';
 
 // ── Token helpers ──────────────────────────────────────────────
-const getToken     = () => localStorage.getItem('pt_token');
-const getRole      = () => localStorage.getItem('pt_role');
-const getUserId    = () => localStorage.getItem('pt_userId');
+const getToken = () => localStorage.getItem('pt_token');
+const getRole = () => localStorage.getItem('pt_role');
+const getUserId = () => localStorage.getItem('pt_userId');
 const getStudentId = () => localStorage.getItem('pt_studentId');
 
 function saveSession({ token, role, userId, studentId }) {
-  localStorage.setItem('pt_token',     token);
-  localStorage.setItem('pt_role',      role);
-  localStorage.setItem('pt_userId',    userId);
+  localStorage.setItem('pt_token', token);
+  localStorage.setItem('pt_role', role);
+  localStorage.setItem('pt_userId', userId);
   localStorage.setItem('pt_studentId', studentId || '');
 }
 
 function clearSession() {
-  ['pt_token','pt_role','pt_userId','pt_studentId'].forEach(k => localStorage.removeItem(k));
+  ['pt_token', 'pt_role', 'pt_userId', 'pt_studentId'].forEach(k => localStorage.removeItem(k));
 }
 
 // ── Auth redirect helpers ──────────────────────────────────────
@@ -46,7 +46,7 @@ function requireRole(role) {
   if (getRole() !== role) {
     // Redirect to the correct dashboard for the actual role
     const currentPath = window.location.pathname;
-    const actualRole  = getRole();
+    const actualRole = getRole();
     if (actualRole === 'Admin') {
       window.location.href = currentPath.includes('/student/') ? '../admin/dashboard.html' : 'admin/dashboard.html';
     } else {
@@ -82,7 +82,7 @@ async function apiFetch(path, options = {}) {
 
 // ── Auth ───────────────────────────────────────────────────────
 const Auth = {
-  login:    (body) => apiFetch('/auth/login',    { method: 'POST', body: JSON.stringify(body) }),
+  login: (body) => apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   register: (body) => apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   logout() {
     clearSession();
@@ -92,41 +92,41 @@ const Auth = {
 
 // ── Students ───────────────────────────────────────────────────
 const Students = {
-  getAll:  ()       => apiFetch('/students'),
-  getById: (id)     => apiFetch(`/students/${id}`),
-  update:  (id, b)  => apiFetch(`/students/${id}`, { method: 'PUT',    body: JSON.stringify(b) }),
-  delete:  (id)     => apiFetch(`/students/${id}`, { method: 'DELETE' }),
+  getAll: () => apiFetch('/students'),
+  getById: (id) => apiFetch(`/students/${id}`),
+  update: (id, b) => apiFetch(`/students/${id}`, { method: 'PUT', body: JSON.stringify(b) }),
+  delete: (id) => apiFetch(`/students/${id}`, { method: 'DELETE' }),
 };
 
 // ── Companies ──────────────────────────────────────────────────
 const Companies = {
-  getAll:      ()       => apiFetch('/companies'),
-  getEligible: ()       => apiFetch('/companies/eligible'),
-  getById:     (id)     => apiFetch(`/companies/${id}`),
-  create:      (b)      => apiFetch('/companies',       { method: 'POST',   body: JSON.stringify(b) }),
-  update:      (id, b)  => apiFetch(`/companies/${id}`, { method: 'PUT',    body: JSON.stringify(b) }),
-  delete:      (id)     => apiFetch(`/companies/${id}`, { method: 'DELETE' }),
+  getAll: () => apiFetch('/companies'),
+  getEligible: () => apiFetch('/companies/eligible'),
+  getById: (id) => apiFetch(`/companies/${id}`),
+  create: (b) => apiFetch('/companies', { method: 'POST', body: JSON.stringify(b) }),
+  update: (id, b) => apiFetch(`/companies/${id}`, { method: 'PUT', body: JSON.stringify(b) }),
+  delete: (id) => apiFetch(`/companies/${id}`, { method: 'DELETE' }),
 };
 
 // ── Applications ───────────────────────────────────────────────
 const Applications = {
-  getAll:       ()      => apiFetch('/applications'),
-  apply:        (b)     => apiFetch('/applications',              { method: 'POST',   body: JSON.stringify(b) }),
-  updateStatus: (id, b) => apiFetch(`/applications/${id}/status`, { method: 'PUT',    body: JSON.stringify(b) }),
-  getAnalytics: ()      => apiFetch('/applications/analytics'),
-  withdraw:     (id)    => apiFetch(`/applications/${id}`,        { method: 'DELETE' }),
+  getAll: () => apiFetch('/applications'),
+  apply: (b) => apiFetch('/applications', { method: 'POST', body: JSON.stringify(b) }),
+  updateStatus: (id, b) => apiFetch(`/applications/${id}/status`, { method: 'PUT', body: JSON.stringify(b) }),
+  getAnalytics: () => apiFetch('/applications/analytics'),
+  withdraw: (id) => apiFetch(`/applications/${id}`, { method: 'DELETE' }),
 };
 
 // ── Sessions ───────────────────────────────────────────────────
 const Sessions = {
-  getAll:      ()       => apiFetch('/sessions'),
-  getSelected: ()       => apiFetch('/sessions/selected'),
-  getById:     (id)     => apiFetch(`/sessions/${id}`),
-  create:      (b)      => apiFetch('/sessions',       { method: 'POST',   body: JSON.stringify(b) }),
-  update:      (id, b)  => apiFetch(`/sessions/${id}`, { method: 'PUT',    body: JSON.stringify(b) }),
-  delete:      (id)     => apiFetch(`/sessions/${id}`, { method: 'DELETE' }),
-  select:      (id)     => apiFetch(`/sessions/${id}/select`, { method: 'POST'   }),
-  unselect:    (id)     => apiFetch(`/sessions/${id}/select`, { method: 'DELETE' }),
+  getAll: () => apiFetch('/sessions'),
+  getSelected: () => apiFetch('/sessions/selected'),
+  getById: (id) => apiFetch(`/sessions/${id}`),
+  create: (b) => apiFetch('/sessions', { method: 'POST', body: JSON.stringify(b) }),
+  update: (id, b) => apiFetch(`/sessions/${id}`, { method: 'PUT', body: JSON.stringify(b) }),
+  delete: (id) => apiFetch(`/sessions/${id}`, { method: 'DELETE' }),
+  select: (id) => apiFetch(`/sessions/${id}/select`, { method: 'POST' }),
+  unselect: (id) => apiFetch(`/sessions/${id}/select`, { method: 'DELETE' }),
 };
 
 // ── UI Helpers ─────────────────────────────────────────────────
@@ -160,12 +160,12 @@ function setLoading(btn, loading) {
 
 function statusBadge(status) {
   const map = {
-    Applied:     'badge-applied',
+    Applied: 'badge-applied',
     Shortlisted: 'badge-shortlisted',
-    Technical:   'badge-technical',
-    HR:          'badge-hr',
-    Selected:    'badge-selected',
-    Rejected:    'badge-rejected',
+    Technical: 'badge-technical',
+    HR: 'badge-hr',
+    Selected: 'badge-selected',
+    Rejected: 'badge-rejected',
   };
   return `<span class="badge ${map[status] || ''}">${status}</span>`;
 }
@@ -187,11 +187,11 @@ function getInitials(name = '') {
 function populateSidebar() {
   const role = getRole() || 'Student';
 
-  const nameEl   = document.getElementById('sidebar-user-name');
-  const roleEl   = document.getElementById('sidebar-user-role');
+  const nameEl = document.getElementById('sidebar-user-name');
+  const roleEl = document.getElementById('sidebar-user-role');
   const avatarEl = document.getElementById('sidebar-avatar');
 
-  if (nameEl)   nameEl.textContent   = role === 'Admin' ? 'Admin' : 'Student';
-  if (roleEl)   roleEl.textContent   = role;
+  if (nameEl) nameEl.textContent = role === 'Admin' ? 'Admin' : 'Student';
+  if (roleEl) roleEl.textContent = role;
   if (avatarEl) avatarEl.textContent = role === 'Admin' ? 'AD' : 'ST';
 }
